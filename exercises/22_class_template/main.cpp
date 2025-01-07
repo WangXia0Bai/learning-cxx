@@ -1,4 +1,7 @@
 ﻿#include "../exercise.h"
+#include <cstring>
+#include <algorithm>
+#include <cmath>
 
 // READ: 类模板 <https://zh.cppreference.com/w/cpp/language/class_template>
 
@@ -10,6 +13,9 @@ struct Tensor4D {
     Tensor4D(unsigned int const shape_[4], T const *data_) {
         unsigned int size = 1;
         // TODO: 填入正确的 shape 并计算 size
+        std::memcpy(shape, shape_ , 4 * sizeof(unsigned int));
+        size = shape[0] * shape[1] * shape[2] * shape[3];
+
         data = new T[size];
         std::memcpy(data, data_, size * sizeof(T));
     }
@@ -28,6 +34,29 @@ struct Tensor4D {
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
         // TODO: 实现单向广播的加法
+        bool broadcast[4];
+        for (int i = 0; i < 4; i++)
+            if (broadcast[i] = (shape[i] != others.shape[i]))
+                ASSERT(others.shape[i] == 1, "!");
+
+        unsigned int stride[4] = {shape[1] * shape[2] * shape[3], 
+                                    shape[2] * shape[3], shape[3], 1};
+        unsigned int others_stride[4] = {others.shape[1] * others.shape[2] * others.shape[3], 
+                                    others.shape[2] * others.shape[3], others.shape[3], 1};
+
+        for(unsigned int i = 0; i < shape[0]; i++)
+            for(unsigned int j = 0; j < shape[1]; j++)
+                for(unsigned int k = 0; k < shape[2]; k++)
+                    for(unsigned int p = 0; p < shape[3]; p++){
+                        auto ii = broadcast[0] ? 0 : i;
+                        auto jj = broadcast[1] ? 0 : j;
+                        auto kk = broadcast[2] ? 0 : k;
+                        auto pp = broadcast[3] ? 0 : p;
+                        data[i * stride[0] + j * stride[1] + k * stride[2] + p] +=
+                            others.data[ii * others_stride[0] + jj * others_stride[1] + kk * others_stride[2] + pp];
+                }
+                    
+
         return *this;
     }
 };
